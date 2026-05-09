@@ -1,6 +1,7 @@
 package eu.duckee.duckletwebserver.annotations.auth.flows;
 
-import net.maikydev.nestserver.ducket.annotations.auth.AuthClient;
+
+import eu.duckee.duckletwebserver.annotations.auth.AuthClient;
 
 import java.util.Optional;
 
