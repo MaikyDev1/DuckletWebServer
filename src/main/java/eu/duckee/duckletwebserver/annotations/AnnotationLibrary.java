@@ -2,6 +2,10 @@ package eu.duckee.duckletwebserver.annotations;
 
 import eu.duckee.duckletwebserver.annotations.auth.Authentication;
 import eu.duckee.duckletwebserver.annotations.auth.RequireAuthentification;
+import eu.duckee.duckletwebserver.annotations.request.RequestBody;
+import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
+import eu.duckee.duckletwebserver.annotations.request.RequestParam;
+import eu.duckee.duckletwebserver.annotations.request.RequestUrlParam;
 import lombok.Getter;
 
 import java.lang.annotation.Annotation;

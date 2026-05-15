@@ -2,24 +2,32 @@ package eu.duckee.duckletwebserver;
 
 import com.sun.net.httpserver.HttpExchange;
 import eu.duckee.duckletwebserver.annotations.AnnotationLibrary;
-import eu.duckee.duckletwebserver.annotations.RequestMapping;
+import eu.duckee.duckletwebserver.annotations.auth.InjectSecurity;
+import eu.duckee.duckletwebserver.annotations.http_types.HttpMethod;
+import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
 import eu.duckee.duckletwebserver.exchange.DuckletRequest;
+import eu.duckee.duckletwebserver.utils.HttpTools;
 import eu.duckee.duckletwebserver.utils.Mapping;
-import eu.duckee.duckletwebserver.utils.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DuckletHandler {
+
+    private DuckletController controller;
+
+    public DuckletHandler(DuckletController controller) {
+        this.controller = controller;
+    }
 
     private Object ducklet;
     private String mapping;
@@ -31,13 +39,23 @@ public class DuckletHandler {
      * @return The wrapped handler of the instance
      * @throws DuckletHandlerException Any bad implementation will result in a failer!
      */
-    protected static DuckletHandler wrapFromRoute(Object object) throws DuckletHandlerException {
-        DuckletHandler dh = new DuckletHandler();
+    protected static DuckletHandler wrapFromRoute(DuckletController controller, Object object) throws DuckletHandlerException {
+        DuckletHandler dh = new DuckletHandler(controller);
         Class<?> clazz = object.getClass();
         if (!clazz.isAnnotationPresent(RequestMapping.class))
             throw new DuckletHandlerException("An object with no RequestMapping was provided!");
         dh.mapping = clazz.getAnnotation(RequestMapping.class).value();
         dh.methods = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(InjectSecurity.class)) {
+                field.setAccessible(true);
+                try {
+                    field.set(object, controller.getSecurityTrail());
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
         for (Method method : clazz.getDeclaredMethods())
             dh.addMethod(method);
         dh.ducklet = object;
@@ -47,7 +65,7 @@ public class DuckletHandler {
     private void addMethod(Method method) throws DuckletHandlerException {
         if (!method.isAnnotationPresent(RequestMapping.class))
             return;
-        DuckletEndpoint endpoint = new DuckletEndpoint();
+        DuckletEndpoint endpoint = new DuckletEndpoint(controller);
         endpoint.setMethod(method);
         for (Annotation annotation : method.getAnnotations()) {
             AnnotationLibrary annot = AnnotationLibrary.getFromAnnotation(annotation);
@@ -69,47 +87,53 @@ public class DuckletHandler {
     }
 
     /**
-     * This function is a port of the endpoin finder.
-     * @param exchange HttpExchange
-     * @param url the url rest
-     * @return true if we found a good endpoint. False if no method was found
+     * We are trying to match a url to this route handler.
+     *
+     * This function is called only from the controller. We must respond here or later to the controller
+     * <b>DON'T</b> let this function finish without a HttpExchange response!
+     *
+     * @param exchange
+     * @param url
+     * @return
      * @throws IOException
      * @throws DuckletHandlerException
      */
-    protected boolean handle(HttpExchange exchange, String url) throws IOException, DuckletHandlerException {
-        Map<String, String> query = null;
-        String queryString = exchange.getRequestURI().getQuery();
-        if (queryString != null && !queryString.isEmpty()) {
-            query = new HashMap<>();
-            String[] pairs = queryString.split("&");
-            for (String pair : pairs) {
-                String[] keyValue = pair.split("=", 2);
-                query.put(
-                        URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8),
-                        keyValue.length > 1 ? URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8) : ""
-                        );
-            }
-        }
+    protected boolean tryAndHandle(HttpExchange exchange, String url) throws IOException, DuckletHandlerException {
+        boolean methodNotAllowed = false;
         for (DuckletEndpoint endpoint : methods) {
-            Pair<Boolean, Map<String, String>> tagLines = endpoint.getMapping().matchAndGetTagLines(url);
-            if (!tagLines.getKey())
+            Optional<Map<String, String>> mappingOptional = endpoint.getMapping().matchAndExtract(url);
+            /* Not a match */
+            if (mappingOptional.isEmpty())
                 continue;
-            if (exchange.getRequestMethod().equalsIgnoreCase(endpoint.getHttpMethod().toString())) {
-                DuckletRequest request = new DuckletRequest();
-                String body = null;
-                InputStream is = exchange.getRequestBody();
-                if (is != null) {
-                    byte[] bytes = is.readAllBytes();
-                    if (bytes.length > 0) {
-                        body = new String(bytes, StandardCharsets.UTF_8);
-                    }
-                }
-                request.addTagLines(tagLines.getValue()).addHttpParams(query).setHttpBody(body);
-                endpoint.handle(ducklet, request).respond(exchange);
-                return true;
+            /* Matched */
+            if (!exchange.getRequestMethod().equalsIgnoreCase(endpoint.getHttpMethod().toString())) {
+                methodNotAllowed = true;
+                continue;
+            }
+            return resolveEndpoint(endpoint, mappingOptional.get(), exchange);
+        }
+        if (methodNotAllowed)
+            controller.getMethodNotAllowed().respond(exchange);
+        else
+            controller.getNotFound().respond(exchange);
+        return false;
+    }
+
+    private boolean resolveEndpoint(DuckletEndpoint endpoint, Map<String, String> tagLines, HttpExchange exchange) throws IOException {
+        DuckletRequest request = DuckletRequest.wrapFromExchange(exchange);
+        /* Parse body */
+        String body = null;
+        InputStream is = exchange.getRequestBody();
+        if (is != null) {
+            byte[] bytes = is.readAllBytes();
+            if (bytes.length > 0) {
+                body = new String(bytes, StandardCharsets.UTF_8);
             }
         }
-        return false;
+        Map<String, String> query = HttpTools.computeQueryParams(exchange.getRequestURI().getRawQuery());
+        request.addTagLines(tagLines).addHttpParams(query).setHttpBody(body);
+        endpoint.execute(ducklet, request).respond(exchange);
+        return true;
     }
 
 }

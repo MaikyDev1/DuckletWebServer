@@ -1,12 +1,10 @@
-package eu.duckee.duckletwebserver;
-
-import eu.duckee.duckletwebserver.annotations.http_types.GetRequest;
-import eu.duckee.duckletwebserver.annotations.http_types.PostRequest;
+package eu.duckee.duckletwebserver.annotations.http_types;
 
 import java.lang.annotation.Annotation;
 
 public enum HttpMethod {
     GET(GetRequest.class),
+    DELETE(DeleteRequest.class),
     POST(PostRequest.class);
 
     private final Class<?> requestClass;

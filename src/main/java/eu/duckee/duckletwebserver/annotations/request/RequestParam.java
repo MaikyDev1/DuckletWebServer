@@ -1,14 +1,12 @@
-package eu.duckee.duckletwebserver.annotations;
+package eu.duckee.duckletwebserver.annotations.request;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RequestMapping {
-
-    String value() default "/";
-
+public @interface RequestParam {
+    String value();
 }

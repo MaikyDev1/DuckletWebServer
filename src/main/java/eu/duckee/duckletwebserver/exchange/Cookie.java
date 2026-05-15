@@ -3,8 +3,8 @@ package eu.duckee.duckletwebserver.exchange;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public record Cookie(
         String name,
@@ -16,39 +16,24 @@ public record Cookie(
         boolean httpOnly
 ) {
 
-    public static Cookie fromHeader(String header) {
-        String[] parts = header.split(";");
-        String[] nameValue = parts[0].trim().split("=", 2);
+    public static List<Cookie> fromCookieHeader(String header) {
 
-        String name = nameValue[0].trim();
-        String value = nameValue.length > 1 ? nameValue[1].trim() : "";
+        List<Cookie> cookies = new ArrayList<>();
 
-        Map<String, String> attrs = new HashMap<>();
-        boolean secure = false;
-        boolean httpOnly = false;
+        for (String part : header.split(";")) {
+            part = part.trim();
 
-        for (int i = 1; i < parts.length; i++) {
-            String part = parts[i].trim();
+            if (part.isEmpty()) continue;
 
-            if (part.equalsIgnoreCase("Secure")) {
-                secure = true;
-            } else if (part.equalsIgnoreCase("HttpOnly")) {
-                httpOnly = true;
-            } else if (part.contains("=")) {
-                String[] kv = part.split("=", 2);
-                attrs.put(kv[0].trim().toLowerCase(), kv[1].trim());
-            }
+            String[] kv = part.split("=", 2);
+
+            String name = kv[0].trim();
+            String value = kv.length > 1 ? kv[1].trim() : "";
+
+            cookies.add(new Cookie(name, value, null, null, null, false, false));
         }
 
-        return new Cookie(
-                name,
-                value,
-                attrs.get("domain"),
-                attrs.get("path"),
-                null,
-                secure,
-                httpOnly
-        );
+        return cookies;
     }
 
     public String toHeader() {

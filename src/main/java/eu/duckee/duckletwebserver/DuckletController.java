@@ -3,12 +3,13 @@ package eu.duckee.duckletwebserver;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import eu.duckee.duckletwebserver.annotations.RequestMapping;
+import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
 import eu.duckee.duckletwebserver.exchange.DuckletResponse;
+import eu.duckee.duckletwebserver.security.SecurityTrail;
 import eu.duckee.duckletwebserver.utils.SimpleLogger;
+import lombok.Getter;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
@@ -19,9 +20,17 @@ public class DuckletController implements HttpHandler {
 
     private HashMap<String, DuckletHandler> routes;
 
+    @Getter
     private DuckletResponse notFound;
+    @Getter
     private DuckletResponse internalServerError;
+    @Getter
+    private DuckletResponse methodNotAllowed;
+    @Getter
     private DuckletResponse notAuthenticated;
+
+    @Getter
+    private SecurityTrail securityTrail;
 
     private HttpServer server;
 
@@ -63,15 +72,15 @@ public class DuckletController implements HttpHandler {
             }
         try {
             String mapping = clazz.getAnnotation(RequestMapping.class).value();
-            DuckletHandler handler = DuckletHandler.wrapFromRoute(ducklet);
+            DuckletHandler handler = DuckletHandler.wrapFromRoute(this, ducklet);
             routes.put(mapping, handler);
         } catch (DuckletHandlerException e) {
             SimpleLogger.error(e.getMessage());
         }
     }
 
-    public void useAuthentification() {
-
+    public void useAuthentification(SecurityTrail trail) {
+        this.securityTrail = trail;
     }
 
     /**
@@ -84,28 +93,27 @@ public class DuckletController implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        String reqUrl = exchange.getRequestURI().getPath();
-        for (String mapping : routes.keySet()) {
-            String hasNext = hasNext(mapping, reqUrl);
-            if (hasNext != null) {
-                try {
-                    if (!routes.get(mapping).handle(exchange, hasNext)) {
-                        notFound.respond(exchange);
-                    }
-                    return;
-                } catch (IOException | DuckletHandlerException e) {
-                    SimpleLogger.error(e.getMessage());
-                }
-                internalServerError.respond(exchange);
+    public void handle(HttpExchange exchange) {
+        try {
+            String reqUrl = exchange.getRequestURI().getPath();
+            for (String mapping : routes.keySet()) {
+                String hasNext = matchWithMapping(mapping, reqUrl);
+                if (hasNext == null)
+                    continue;
+                routes.get(mapping).tryAndHandle(exchange, hasNext);
                 return;
             }
+            notFound.respond(exchange);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        notFound.respond(exchange);
-        return;
     }
 
-    private String hasNext(String mapping, String request) {
+    /**
+     * Internal function that will match a request url with a mapping
+     * @return A string that is the rest after the match or null;
+     */
+    private String matchWithMapping(String mapping, String request) {
         String requestUrl = request + "/";
         for (int i = 0; i < mapping.length(); i++) {
             if (requestUrl.charAt(i) != mapping.charAt(i))
