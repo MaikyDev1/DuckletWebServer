@@ -8,6 +8,7 @@ import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.annotations.request.RequestParam;
 import eu.duckee.duckletwebserver.exchange.DuckletResponse;
 import eu.duckee.duckletwebserver.security.SecurityTrail;
+import eu.duckee.duckletwebserver.security.context.AuthContext;
 import eu.duckee.duckletwebserver.security.login_details.SessionLoginDetails;
 import eu.duckee.duckletwebserver.security.types.session.Session;
 
@@ -36,8 +37,12 @@ public class AuthRoute {
 
     @GetRequest
     @RequestMapping("/")
-    public DuckletResponse account(@Authentication Session user) {
-        return DuckletResponse.ok();
+    public DuckletResponse account(@Authentication AuthContext<Session> user) {
+        if (user == null) {
+            return DuckletResponse.badRequest().sendText("Not Logged in");
+        }
+        System.out.println(user.userId());
+        return DuckletResponse.ok().sendText(user.userId());
     }
 
 }

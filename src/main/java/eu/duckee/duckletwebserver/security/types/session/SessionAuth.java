@@ -47,7 +47,7 @@ public class SessionAuth implements SecurityTrail {
         response.addCookie(new Cookie(
                 "session", session.get().session(),
                 null, null, session.get().expiresAt(),
-                false, true
+                false, true, "Lax"
         ));
         return response;
     }

@@ -13,7 +13,8 @@ public record Cookie(
         String path,
         Instant expiresAt,
         boolean secure,
-        boolean httpOnly
+        boolean httpOnly,
+        String sameSite
 ) {
 
     public static List<Cookie> fromCookieHeader(String header) {
@@ -30,7 +31,7 @@ public record Cookie(
             String name = kv[0].trim();
             String value = kv.length > 1 ? kv[1].trim() : "";
 
-            cookies.add(new Cookie(name, value, null, null, null, false, false));
+            cookies.add(new Cookie(name, value, null, null, null, false, false, null));
         }
 
         return cookies;
@@ -56,6 +57,9 @@ public record Cookie(
 
         if (httpOnly)
             sb.append("; HttpOnly");
+
+        if (sameSite != null)
+            sb.append("; SameSite=").append(sameSite);
 
         return sb.toString();
     }

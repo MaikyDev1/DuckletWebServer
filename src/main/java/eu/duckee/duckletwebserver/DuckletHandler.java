@@ -1,8 +1,8 @@
 package eu.duckee.duckletwebserver;
 
 import com.sun.net.httpserver.HttpExchange;
-import eu.duckee.duckletwebserver.annotations.AnnotationLibrary;
 import eu.duckee.duckletwebserver.annotations.auth.InjectSecurity;
+import eu.duckee.duckletwebserver.annotations.auth.RequireAuthentification;
 import eu.duckee.duckletwebserver.annotations.http_types.HttpMethod;
 import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
@@ -29,6 +29,7 @@ public class DuckletHandler {
         this.controller = controller;
     }
 
+    private boolean requireAuthentification;
     private Object ducklet;
     private String mapping;
     private List<DuckletEndpoint> methods;
@@ -45,6 +46,7 @@ public class DuckletHandler {
         if (!clazz.isAnnotationPresent(RequestMapping.class))
             throw new DuckletHandlerException("An object with no RequestMapping was provided!");
         dh.mapping = clazz.getAnnotation(RequestMapping.class).value();
+        dh.requireAuthentification = clazz.isAnnotationPresent(RequireAuthentification.class);
         dh.methods = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(InjectSecurity.class)) {
@@ -67,11 +69,12 @@ public class DuckletHandler {
             return;
         DuckletEndpoint endpoint = new DuckletEndpoint(controller);
         endpoint.setMethod(method);
+
+        endpoint.setRequireAuthentification(method.isAnnotationPresent(RequireAuthentification.class));
+        endpoint.setMapping(Mapping.wrapFromString(method.getAnnotation(RequestMapping.class).value()));
+
+        // Method testing
         for (Annotation annotation : method.getAnnotations()) {
-            AnnotationLibrary annot = AnnotationLibrary.getFromAnnotation(annotation);
-            if (annot == AnnotationLibrary.REQUEST_MAPPING) {
-                endpoint.setMapping(Mapping.wrapFromString(method.getAnnotation(RequestMapping.class).value()));
-            }
             HttpMethod httpMethod = HttpMethod.getMethod(annotation);
             if (httpMethod == null)
                 continue;

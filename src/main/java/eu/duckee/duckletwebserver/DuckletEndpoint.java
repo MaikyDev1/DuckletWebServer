@@ -8,6 +8,7 @@ import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
 import eu.duckee.duckletwebserver.exchange.DuckletRequest;
 import eu.duckee.duckletwebserver.exchange.DuckletResponse;
 import eu.duckee.duckletwebserver.security.context.AuthResult;
+import eu.duckee.duckletwebserver.security.context.AuthSuccess;
 import eu.duckee.duckletwebserver.utils.Mapping;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,7 @@ public class DuckletEndpoint {
     private HttpMethod httpMethod;
     private Mapping mapping;
     private Method method;
+    private boolean requireAuthentification;
 
     private DuckletController controller;
 
@@ -46,8 +48,17 @@ public class DuckletEndpoint {
                     System.out.println(request.getCookies());
                     System.out.println(request.getCookies().get("session").toHeader());
                     AuthResult authResult = controller.getSecurityTrail().authenticate(request);
-//                    if (authResult instanceof AuthSuccess<?>)
-//                        processedParams[i] = ;
+                    System.out.println("Session result: " + authResult);
+                    if (authResult instanceof AuthSuccess<?>) {
+                        AuthSuccess success = ((AuthSuccess) authResult);
+                        if (success.context().getClass().getName().equalsIgnoreCase(param.getType().getName())) {
+                            processedParams[i] = success.context();
+                        } else {
+                            processedParams[i] = null;
+                        }
+                    } else {
+                        processedParams[i] = null;
+                    }
                 }
                 case REQUEST_PARAM -> {
                     if (request.getHttpParams() == null) {
