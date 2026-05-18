@@ -8,5 +8,4 @@ public record Session(
         Instant createdAt,
         Instant expiresAt
         ) {
-
 }

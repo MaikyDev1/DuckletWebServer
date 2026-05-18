@@ -1,4 +1,4 @@
-package eu.duckee.duckletwebserver;
+package eu.duckee.duckletwebserver.exchange;
 
 import lombok.Getter;
 

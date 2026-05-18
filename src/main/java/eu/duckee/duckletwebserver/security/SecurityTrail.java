@@ -11,10 +11,11 @@ public interface SecurityTrail {
 
     /**
      * This function will process a response. And if the user implementation will
-     * provide a valid session, the response will add the desired cookie.
+     * provide a valid session, the response will be modified based on the auth type
      * @param response the response
-     * @param details some details provided by the backend
-     * @return
+     * @param details the login details provided by the user
+     * @return null if the login failed or a Response if the login is a success
+     * YOU MUST return the login result to the route return.
      */
     DuckletResponse login(DuckletResponse response, LoginDetails details);
     void unAuthenticate(DuckletRequest request);

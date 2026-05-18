@@ -1,6 +1,7 @@
 package eu.duckee.duckletwebserver.annotations;
 
 import eu.duckee.duckletwebserver.annotations.auth.Authentication;
+import eu.duckee.duckletwebserver.annotations.request.Request;
 import eu.duckee.duckletwebserver.annotations.request.RequestBody;
 import eu.duckee.duckletwebserver.annotations.request.RequestParam;
 import eu.duckee.duckletwebserver.annotations.request.RequestUrlParam;
@@ -13,6 +14,8 @@ import java.util.function.Function;
 public enum ParameterAnnotations {
 
     AUTHENTIFICATION(Authentication.class, a -> null),
+
+    REQUEST(Request.class, a -> null),
 
     REQUEST_BODY(RequestBody.class, a -> null),
 
