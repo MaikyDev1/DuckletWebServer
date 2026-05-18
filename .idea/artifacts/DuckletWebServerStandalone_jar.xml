@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="DuckletWebServerStandalone:jar">
+    <output-path>$USER_HOME$/Desktop</output-path>
+    <root id="archive" name="DuckletWebServer.jar">
+      <element id="module-output" name="DuckletWebServer" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/MaikyDev1/DuckyCore/1.0-APLHA/DuckyCore-1.0-APLHA.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
