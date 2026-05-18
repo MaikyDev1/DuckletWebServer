@@ -17,9 +17,13 @@ import java.util.Optional;
 public class SessionAuth implements SecurityTrail {
 
     private final SessionImplementation sessionImplementation;
+    private final SessionConfig config;
 
-    public SessionAuth(SessionImplementation sessionImplementation) {
+    public SessionAuth(SessionImplementation sessionImplementation, SessionConfig config) {
         this.sessionImplementation = sessionImplementation;
+        if (config == null) {
+            this.config = new SessionConfig() {};
+        } else this.config = config;
     }
 
     @Override
@@ -46,15 +50,18 @@ public class SessionAuth implements SecurityTrail {
             return null;
         response.addCookie(new Cookie(
                 "session", session.get().session(),
-                null, null, session.get().expiresAt(),
+                null, "/", session.get().expiresAt(),
                 false, true, "Lax"
         ));
         return response;
     }
 
     @Override
-    public AuthResult unAuthenticate(DuckletRequest request) {
-        return null;
+    public void unAuthenticate(DuckletRequest request) {
+        Optional<Cookie> cookie = request.getCookie("session");
+        if (cookie.isEmpty())
+            return;
+        sessionImplementation.unAuthenticate(cookie.get().value());
     }
 
 }

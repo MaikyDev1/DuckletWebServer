@@ -6,6 +6,7 @@ import eu.duckee.duckletwebserver.annotations.http_types.HttpMethod;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
 import eu.duckee.duckletwebserver.exchange.DuckletRequest;
 import eu.duckee.duckletwebserver.exchange.DuckletResponse;
+import eu.duckee.duckletwebserver.security.context.AuthFailure;
 import eu.duckee.duckletwebserver.security.context.AuthResult;
 import eu.duckee.duckletwebserver.security.context.AuthSuccess;
 import eu.duckee.duckletwebserver.utils.Mapping;
@@ -29,7 +30,7 @@ public class DuckletEndpoint {
     private Mapping mapping;
     private Method method;
     @Setter
-    private boolean requireAuthentification;
+    private AccessType accessType;
 
     private AnnotationMeta cachedParams[];
 
@@ -64,13 +65,29 @@ public class DuckletEndpoint {
     }
 
     protected DuckletResponse execute(Object parent, DuckletRequest request) throws DuckletHandlerException {
+        AuthResult authResult = null;
+        if (accessType != AccessType.PERMIT_ALL) {
+            authResult = controller.getSecurityTrail().authenticate(request);
+            switch (accessType) {
+                case AUTHENTICATED_ONLY -> {
+                    if (authResult instanceof AuthFailure) {
+                        return controller.config.unauthorized();
+                    }
+                }
+                case UNAUTHENTICATED_ONLY -> {
+                    if (authResult instanceof AuthSuccess) {
+                        return controller.config.forbidden();
+                    }
+                }
+            }
+        }
         Object[] processedParams = new Object[cachedParams.length];
         for (int i = 0; i < cachedParams.length; i++) {
             AnnotationMeta meta = cachedParams[i];
             switch (meta.type()) {
                 case AUTHENTIFICATION -> {
-                    AuthResult authResult = controller.getSecurityTrail().authenticate(request);
-                    System.out.println("Session result: " + authResult);
+                    if (authResult == null)
+                        authResult = controller.getSecurityTrail().authenticate(request);
                     if (authResult instanceof AuthSuccess<?>) {
                         AuthSuccess success = ((AuthSuccess) authResult);
                         if (success.context().getClass().getName().equalsIgnoreCase(meta.paramType().getName())) {

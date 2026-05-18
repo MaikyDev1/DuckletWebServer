@@ -25,29 +25,42 @@ public class DuckletResponse {
     }
 
     public static DuckletResponse created() {
-        return new DuckletResponse().setCode(201);
+        return new DuckletResponse().setCode(201).sendText("Created");
     }
 
     public static DuckletResponse accepted() {
-        return new DuckletResponse().setCode(202);
+        return new DuckletResponse().setCode(202).sendText("Accepted");
     }
 
     public static DuckletResponse noContent() {
-        return new DuckletResponse().setCode(204);
+        return new DuckletResponse().setCode(204).sendText("No Content");
     }
 
     // 400-499 - Client error requests
 
     public static DuckletResponse badRequest() {
-        return new DuckletResponse().setCode(400);
+        return new DuckletResponse().setCode(400).sendText("Bad Request");
     }
+
+    public static DuckletResponse unauthorized() {
+        return new DuckletResponse().setCode(401).sendText("Unauthorized");
+    }
+
+    public static DuckletResponse forbidden() {
+        return new DuckletResponse().setCode(403).sendText("Forbidden");
+    }
+
     public static DuckletResponse notFound() {
-        return new DuckletResponse().setCode(404);
+        return new DuckletResponse().setCode(404).sendText("Not Found");
+    }
+
+    public static DuckletResponse methodNotAllowed() {
+        return new DuckletResponse().setCode(405).sendText("Method Not Allowed");
     }
 
     // 500
     public static DuckletResponse internalServerError() {
-        return new DuckletResponse().setCode(500);
+        return new DuckletResponse().setCode(500).sendText("Internal Server Error");
     }
 
     public DuckletResponse addCookie(Cookie cookie) {

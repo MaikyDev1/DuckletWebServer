@@ -39,7 +39,6 @@ public class DuckletRequest {
         hdrs.forEach((key, value) -> {
             if (key.equalsIgnoreCase("cookie")) {
                     request.addCookies(Cookie.fromCookieHeader(value.getFirst()));
-                    System.out.println(value.toString());
             } else {
                 request.addHeader(key, String.join(", ", value));
             }

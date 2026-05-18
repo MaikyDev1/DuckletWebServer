@@ -2,7 +2,8 @@ package eu.duckee.duckletwebserver;
 
 import com.sun.net.httpserver.HttpExchange;
 import eu.duckee.duckletwebserver.annotations.auth.InjectSecurity;
-import eu.duckee.duckletwebserver.annotations.auth.RequireAuthentification;
+import eu.duckee.duckletwebserver.annotations.auth.AuthenticatedOnly;
+import eu.duckee.duckletwebserver.annotations.auth.UnauthenticatedOnly;
 import eu.duckee.duckletwebserver.annotations.http_types.HttpMethod;
 import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
@@ -46,7 +47,7 @@ public class DuckletHandler {
         if (!clazz.isAnnotationPresent(RequestMapping.class))
             throw new DuckletHandlerException("An object with no RequestMapping was provided!");
         dh.mapping = clazz.getAnnotation(RequestMapping.class).value();
-        dh.requireAuthentification = clazz.isAnnotationPresent(RequireAuthentification.class);
+        dh.requireAuthentification = clazz.isAnnotationPresent(AuthenticatedOnly.class);
         dh.methods = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(InjectSecurity.class)) {
@@ -70,7 +71,14 @@ public class DuckletHandler {
         DuckletEndpoint endpoint = new DuckletEndpoint(controller);
         endpoint.setMethod(method);
 
-        endpoint.setRequireAuthentification(method.isAnnotationPresent(RequireAuthentification.class));
+        if (method.isAnnotationPresent(AuthenticatedOnly.class)) {
+            endpoint.setAccessType(AccessType.AUTHENTICATED_ONLY);
+        } else if (method.isAnnotationPresent(UnauthenticatedOnly.class)) {
+            endpoint.setAccessType(AccessType.UNAUTHENTICATED_ONLY);
+        } else {
+            endpoint.setAccessType(AccessType.PERMIT_ALL);
+        }
+
         endpoint.setMapping(Mapping.wrapFromString(method.getAnnotation(RequestMapping.class).value()));
 
         // Method testing
@@ -116,9 +124,9 @@ public class DuckletHandler {
             return resolveEndpoint(endpoint, mappingOptional.get(), exchange);
         }
         if (methodNotAllowed)
-            controller.getMethodNotAllowed().respond(exchange);
+            controller.config.methodNotAllowed().respond(exchange);
         else
-            controller.getNotFound().respond(exchange);
+            controller.config.notFound().respond(exchange);
         return false;
     }
 

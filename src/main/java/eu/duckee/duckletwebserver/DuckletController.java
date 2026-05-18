@@ -5,8 +5,10 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
-import eu.duckee.duckletwebserver.exchange.DuckletResponse;
 import eu.duckee.duckletwebserver.security.SecurityTrail;
+import eu.duckee.duckletwebserver.security.types.session.SessionAuth;
+import eu.duckee.duckletwebserver.security.types.session.SessionConfig;
+import eu.duckee.duckletwebserver.security.types.session.SessionImplementation;
 import eu.duckee.duckletwebserver.utils.SimpleLogger;
 import lombok.Getter;
 
@@ -20,14 +22,7 @@ public class DuckletController implements HttpHandler {
 
     private HashMap<String, DuckletHandler> routes;
 
-    @Getter
-    private DuckletResponse notFound;
-    @Getter
-    private DuckletResponse internalServerError;
-    @Getter
-    private DuckletResponse methodNotAllowed;
-    @Getter
-    private DuckletResponse notAuthenticated;
+    public DuckletConfig config = new DuckletConfig() {};
 
     @Getter
     private SecurityTrail securityTrail;
@@ -45,9 +40,6 @@ public class DuckletController implements HttpHandler {
     public static DuckletController createController(int port, int threads) {
         SimpleLogger.info("Starting Ducklet Lightweight Web Server. [" + VERSION + "]");
         DuckletController duckletController = new DuckletController();
-        duckletController.notFound = DuckletResponse.notFound().sendText("Not found");
-        duckletController.internalServerError = DuckletResponse.internalServerError().sendText("Internal server error");
-        duckletController.notAuthenticated = DuckletResponse.badRequest().sendText("Bad request");
         duckletController.routes = new HashMap<>();
         try {
             duckletController.server = HttpServer.create(new InetSocketAddress(port), 0);
@@ -79,8 +71,12 @@ public class DuckletController implements HttpHandler {
         }
     }
 
-    public void useAuthentification(SecurityTrail trail) {
-        this.securityTrail = trail;
+    public void useSessionAuthentication(SessionImplementation implementation) {
+        this.securityTrail = new SessionAuth(implementation, null);
+    }
+
+    public void useSessionAuthentication(SessionImplementation implementation, SessionConfig config) {
+        this.securityTrail = new SessionAuth(implementation, config);
     }
 
     /**
@@ -103,7 +99,7 @@ public class DuckletController implements HttpHandler {
                 routes.get(mapping).tryAndHandle(exchange, hasNext);
                 return;
             }
-            notFound.respond(exchange);
+            config.notFound().respond(exchange);
         } catch (Exception e) {
             e.printStackTrace();
         }

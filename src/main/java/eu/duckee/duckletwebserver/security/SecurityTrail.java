@@ -17,6 +17,6 @@ public interface SecurityTrail {
      * @return
      */
     DuckletResponse login(DuckletResponse response, LoginDetails details);
-    AuthResult unAuthenticate(DuckletRequest request);
+    void unAuthenticate(DuckletRequest request);
 
 }
