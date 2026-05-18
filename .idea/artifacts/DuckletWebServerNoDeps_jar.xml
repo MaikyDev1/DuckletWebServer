@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="DuckletWebServerNoDeps:jar">
+    <output-path>$USER_HOME$/Desktop</output-path>
+    <root id="archive" name="DuckletWebServer.jar">
+      <element id="module-output" name="DuckletWebServer" />
+    </root>
+  </artifact>
+</component>

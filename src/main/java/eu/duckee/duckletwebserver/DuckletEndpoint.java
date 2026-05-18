@@ -85,6 +85,13 @@ public class DuckletEndpoint {
         for (int i = 0; i < cachedParams.length; i++) {
             AnnotationMeta meta = cachedParams[i];
             switch (meta.type()) {
+                case REQUEST -> {
+                    if (meta.paramType() == DuckletRequest.class) {
+                        processedParams[i] = request;
+                        break;
+                    }
+                    processedParams[i] = null;
+                }
                 case AUTHENTIFICATION -> {
                     if (authResult == null)
                         authResult = controller.getSecurityTrail().authenticate(request);

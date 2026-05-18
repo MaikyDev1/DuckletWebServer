@@ -28,7 +28,7 @@ public class SessionAuth implements SecurityTrail {
 
     @Override
     public AuthResult authenticate(DuckletRequest request) {
-        Optional<Cookie> cookie = request.getCookie("session");
+        Optional<Cookie> cookie = request.getCookie(config.sessionName());
         if (cookie.isEmpty())
             return new AuthFailure("No cookie");
         Optional<Session> optionalSession = sessionImplementation.authenticate(cookie.get().value());
@@ -45,20 +45,22 @@ public class SessionAuth implements SecurityTrail {
     public DuckletResponse login(DuckletResponse response, LoginDetails details) {
         if (!(details instanceof SessionLoginDetails(String username, String password)))
             return null;
+        if (username == null || password == null)
+            return null;
         Optional<Session> session = sessionImplementation.login(username, password);
         if (session.isEmpty())
             return null;
         response.addCookie(new Cookie(
-                "session", session.get().session(),
-                null, "/", session.get().expiresAt(),
-                false, true, "Lax"
+                config.sessionName(), session.get().session(),
+                config.domain(), config.path(), session.get().expiresAt(),
+                config.secure(), config.httpOnly(), config.sameSite()
         ));
         return response;
     }
 
     @Override
     public void unAuthenticate(DuckletRequest request) {
-        Optional<Cookie> cookie = request.getCookie("session");
+        Optional<Cookie> cookie = request.getCookie(config.sessionName());
         if (cookie.isEmpty())
             return;
         sessionImplementation.unAuthenticate(cookie.get().value());

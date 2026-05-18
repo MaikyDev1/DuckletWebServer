@@ -1,7 +1,6 @@
 package eu.duckee.duckletwebserver.exchange;
 
 import com.sun.net.httpserver.HttpExchange;
-import eu.duckee.duckletwebserver.ResponseType;
 import net.maikydev.duckycore.data.json.DuckyJson;
 import net.maikydev.duckycore.data.json.objects.JsonEntity;
 
