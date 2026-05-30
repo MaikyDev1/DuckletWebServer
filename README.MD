@@ -21,7 +21,7 @@ where I added cool features, in a Java Spring style.
 
 ## Usage
 
-1. First get the framework from the binaries or JitPack (For Maven useage).
+1. First get the framework from the binaries, JitPack or github (For Maven useage).
 
 ## Routes
 
