@@ -6,6 +6,7 @@ import net.maikydev.duckycore.data.json.objects.JsonEntity;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -116,15 +117,27 @@ public class DuckletResponse {
 
 
     public void respond(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", responseType.getContentType());
-        if (cookies != null)
+        exchange.getResponseHeaders().set(
+                "Content-Type",
+                responseType.getContentType()
+        );
+
+        if (cookies != null) {
             for (Cookie cookie : cookies) {
-                exchange.getResponseHeaders().add("Set-Cookie", cookie.toHeader());
+                exchange.getResponseHeaders().add(
+                        "Set-Cookie",
+                        cookie.toHeader()
+                );
             }
-        exchange.sendResponseHeaders(code, content.length());
-        OutputStream os = exchange.getResponseBody();
-        os.write(content.getBytes());
-        os.close();
+        }
+
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+
+        exchange.sendResponseHeaders(code, bytes.length);
+
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
     }
 
     // semi builder
