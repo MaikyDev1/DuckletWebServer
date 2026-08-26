@@ -33,7 +33,7 @@ public class DuckletResponse {
     }
 
     public static DuckletResponse noContent() {
-        return new DuckletResponse().setCode(204).sendText("No Content");
+        return new DuckletResponse().setCode(204);
     }
 
 
@@ -179,6 +179,11 @@ public class DuckletResponse {
                         cookie.toHeader()
                 );
             }
+        }
+
+        if (code == 204 || code == 304) {
+            exchange.sendResponseHeaders(code, -1);
+            return;
         }
 
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);

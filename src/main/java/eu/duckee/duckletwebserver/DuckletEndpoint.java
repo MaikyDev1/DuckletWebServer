@@ -14,7 +14,9 @@ import eu.duckee.duckletwebserver.utils.SimpleLogger;
 import lombok.Getter;
 import lombok.Setter;
 import net.maikydev.duckycore.data.json.DuckyJson;
+import net.maikydev.duckycore.data.json.objects.JsonArray;
 import net.maikydev.duckycore.data.json.objects.JsonEntity;
+import net.maikydev.duckycore.data.json.objects.JsonObject;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -117,6 +119,10 @@ public class DuckletEndpoint {
                     }
                     if (meta.paramType() == JsonEntity.class) {
                         processedParams[i] = DuckyJson.serialization(request.getHttpBody());
+                    } else if (meta.paramType() == JsonObject.class) {
+                        processedParams[i] = DuckyJson.toJsonObject(request.getHttpBody());
+                    } else if (meta.paramType() == JsonArray.class) {
+                        processedParams[i] = DuckyJson.toJsonArray(request.getHttpBody());
                     } else if (meta.paramType() == String.class) {
                         processedParams[i] = request.getHttpBody();
                     } else {
