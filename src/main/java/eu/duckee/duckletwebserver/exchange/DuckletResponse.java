@@ -18,7 +18,7 @@ public class DuckletResponse {
     private ResponseType responseType = ResponseType.TEXT;
     private List<Cookie> cookies;
 
-    // 200-299 - Successful messages
+// 2xx - Successful requests
 
     public static DuckletResponse ok() {
         return new DuckletResponse().setCode(200).sendText("OK");
@@ -36,7 +36,23 @@ public class DuckletResponse {
         return new DuckletResponse().setCode(204).sendText("No Content");
     }
 
-    // 400-499 - Client error requests
+
+// 3xx - Redirection
+
+    public static DuckletResponse movedPermanently() {
+        return new DuckletResponse().setCode(301).sendText("Moved Permanently");
+    }
+
+    public static DuckletResponse found() {
+        return new DuckletResponse().setCode(302).sendText("Found");
+    }
+
+    public static DuckletResponse notModified() {
+        return new DuckletResponse().setCode(304).sendText("Not Modified");
+    }
+
+
+// 4xx - Client errors
 
     public static DuckletResponse badRequest() {
         return new DuckletResponse().setCode(400).sendText("Bad Request");
@@ -58,9 +74,43 @@ public class DuckletResponse {
         return new DuckletResponse().setCode(405).sendText("Method Not Allowed");
     }
 
-    // 500
+    public static DuckletResponse conflict() {
+        return new DuckletResponse().setCode(409).sendText("Conflict");
+    }
+
+    public static DuckletResponse unsupportedMediaType() {
+        return new DuckletResponse().setCode(415).sendText("Unsupported Media Type");
+    }
+
+    public static DuckletResponse unprocessableEntity() {
+        return new DuckletResponse().setCode(422).sendText("Unprocessable Entity");
+    }
+
+    public static DuckletResponse tooManyRequests() {
+        return new DuckletResponse().setCode(429).sendText("Too Many Requests");
+    }
+
+
+// 5xx - Server errors
+
     public static DuckletResponse internalServerError() {
         return new DuckletResponse().setCode(500).sendText("Internal Server Error");
+    }
+
+    public static DuckletResponse notImplemented() {
+        return new DuckletResponse().setCode(501).sendText("Not Implemented");
+    }
+
+    public static DuckletResponse badGateway() {
+        return new DuckletResponse().setCode(502).sendText("Bad Gateway");
+    }
+
+    public static DuckletResponse serviceUnavailable() {
+        return new DuckletResponse().setCode(503).sendText("Service Unavailable");
+    }
+
+    public static DuckletResponse gatewayTimeout() {
+        return new DuckletResponse().setCode(504).sendText("Gateway Timeout");
     }
 
     public DuckletResponse addCookie(Cookie cookie) {

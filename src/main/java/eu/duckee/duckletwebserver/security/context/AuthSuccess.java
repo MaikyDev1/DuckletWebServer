@@ -1,3 +1,3 @@
 package eu.duckee.duckletwebserver.security.context;
 
-public record AuthSuccess<T> (AuthContext<T> context) implements AuthResult {}
+public record AuthSuccess (AuthContext context) implements AuthResult {}

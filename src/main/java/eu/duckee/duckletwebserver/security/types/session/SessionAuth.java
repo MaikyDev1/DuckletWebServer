@@ -36,9 +36,7 @@ public class SessionAuth implements SecurityTrail {
             return new AuthFailure("Auth failed!");
         }
         Session session = optionalSession.get();
-        return new AuthSuccess<>(
-                new AuthContext<String>(session.user(), AuthType.SESSION, null)
-        );
+        return new AuthSuccess(new AuthContext(session.identity(), AuthType.SESSION));
     }
 
     @Override

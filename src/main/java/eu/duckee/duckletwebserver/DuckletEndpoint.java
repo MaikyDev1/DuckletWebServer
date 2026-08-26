@@ -10,6 +10,7 @@ import eu.duckee.duckletwebserver.security.context.AuthFailure;
 import eu.duckee.duckletwebserver.security.context.AuthResult;
 import eu.duckee.duckletwebserver.security.context.AuthSuccess;
 import eu.duckee.duckletwebserver.utils.Mapping;
+import eu.duckee.duckletwebserver.utils.SimpleLogger;
 import lombok.Getter;
 import lombok.Setter;
 import net.maikydev.duckycore.data.json.DuckyJson;
@@ -34,7 +35,7 @@ public class DuckletEndpoint {
 
     private AnnotationMeta cachedParams[];
 
-    private DuckletController controller;
+    private final DuckletController controller;
 
     public DuckletEndpoint(DuckletController controller) {
         this.controller = controller;
@@ -95,11 +96,16 @@ public class DuckletEndpoint {
                 case AUTHENTIFICATION -> {
                     if (authResult == null)
                         authResult = controller.getSecurityTrail().authenticate(request);
-                    if (authResult instanceof AuthSuccess<?>) {
+                    if (authResult instanceof AuthSuccess) {
                         AuthSuccess success = ((AuthSuccess) authResult);
-                        if (success.context().getClass().getName().equalsIgnoreCase(meta.paramType().getName())) {
-                            processedParams[i] = success.context();
+                        String sessionIdentityType = success.context().identity().getClass().getName();
+                        if (sessionIdentityType.equalsIgnoreCase(meta.paramType().getName())) {
+                            processedParams[i] = success.context().identity();
                             break;
+                        } else {
+                            SimpleLogger.error("Authentification type is not met on: "
+                                    + method.getName() + ". You requested: " + meta.paramType().getName() + ". Session provided: "
+                                    + sessionIdentityType);
                         }
                     }
                     processedParams[i] = null;

@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import eu.duckee.duckletwebserver.annotations.request.RequestMapping;
 import eu.duckee.duckletwebserver.exception.DuckletHandlerException;
+import eu.duckee.duckletwebserver.exchange.DuckletResponse;
 import eu.duckee.duckletwebserver.security.SecurityTrail;
 import eu.duckee.duckletwebserver.security.types.session.SessionAuth;
 import eu.duckee.duckletwebserver.security.types.session.SessionConfig;
@@ -12,13 +13,14 @@ import eu.duckee.duckletwebserver.security.types.session.SessionImplementation;
 import eu.duckee.duckletwebserver.utils.SimpleLogger;
 import lombok.Getter;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 
 public class DuckletController implements HttpHandler {
 
-    public static String VERSION = "ALPHA-0.1V";
+    public static String VERSION = "ALPHA-0.1.2V";
 
     private HashMap<String, DuckletHandler> routes;
 
@@ -89,7 +91,7 @@ public class DuckletController implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) {
+    public void handle(HttpExchange exchange) throws IOException {
         try {
             String reqUrl = exchange.getRequestURI().getPath();
             for (String mapping : routes.keySet()) {
@@ -101,6 +103,7 @@ public class DuckletController implements HttpHandler {
             }
             config.notFound().respond(exchange);
         } catch (Exception e) {
+            DuckletResponse.internalServerError().respond(exchange);
             e.printStackTrace();
         }
     }

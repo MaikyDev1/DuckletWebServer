@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public record Session(
         String session,
-        String user,
+        Object identity,
         Instant createdAt,
         Instant expiresAt
         ) {
