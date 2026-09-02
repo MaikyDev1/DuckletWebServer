@@ -8,7 +8,7 @@ public enum HttpMethod {
     GET(GetRequest.class),
     DELETE(DeleteRequest.class),
     PUT(PutRequest.class),
-    PATCH(PutRequest.class),
+    PATCH(PatchRequest.class),
     POST(PostRequest.class);
 
     private final Class<?> requestClass;
