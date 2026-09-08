@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 
 public class DuckletController implements HttpHandler {
 
-    public static String VERSION = "ALPHA-0.1.2V";
+    public static String VERSION = "ALPHA-0.1.4V";
 
     private HashMap<String, DuckletHandler> routes;
 
@@ -66,8 +66,8 @@ public class DuckletController implements HttpHandler {
             }
         try {
             String mapping = clazz.getAnnotation(RequestMapping.class).value();
-            DuckletHandler handler = DuckletHandler.wrapFromRoute(this, ducklet);
-            routes.put(mapping, handler);
+            if (!routes.containsKey(mapping)) routes.put(mapping, new DuckletHandler(this));
+            routes.get(mapping).addDucklet(ducklet);
         } catch (DuckletHandlerException e) {
             SimpleLogger.error(e.getMessage());
         }
@@ -98,13 +98,17 @@ public class DuckletController implements HttpHandler {
                 String hasNext = matchWithMapping(mapping, reqUrl);
                 if (hasNext == null)
                     continue;
-                routes.get(mapping).tryAndHandle(exchange, hasNext);
+                if (!routes.get(mapping).tryAndHandle(exchange, hasNext)) {
+                    config.internalServerError().respond(exchange);
+                    return;
+                }
                 return;
             }
             config.notFound().respond(exchange);
         } catch (Exception e) {
             DuckletResponse.internalServerError().respond(exchange);
-            e.printStackTrace();
+            SimpleLogger.error(e.getMessage());
+            SimpleLogger.error(e.getCause().getMessage());
         }
     }
 

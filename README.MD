@@ -3,6 +3,8 @@
 A simple, fast, annotation based web server for light projects. Built on top of java native [HttpServer](https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html),
 where I added cool features, in a Java Spring style.
 
+Read more at [ducklet.duckee.eu](https://ducklet.duckee.eu/)
+
 > [!CAUTION]
 > Please use with caution, the framework is in early alpha; bugs and vulnerabilities may exist.
 
@@ -12,6 +14,9 @@ where I added cool features, in a Java Spring style.
 - Boot's fast.
 - Consumes minimal resources
 - Build-in authentification if needit.
+- A route can exist in multiple classes
+- Setup authentification in minutes.
+- Most features are build-in
 
 ### Known issues/Missing features
 - [ ] 🔒 SSL and HTTPS is not supported by the framework. You need to use a proxy for that.

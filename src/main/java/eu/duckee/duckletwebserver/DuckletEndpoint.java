@@ -9,6 +9,7 @@ import eu.duckee.duckletwebserver.exchange.DuckletResponse;
 import eu.duckee.duckletwebserver.security.context.AuthFailure;
 import eu.duckee.duckletwebserver.security.context.AuthResult;
 import eu.duckee.duckletwebserver.security.context.AuthSuccess;
+import eu.duckee.duckletwebserver.utils.ConversionsUtils;
 import eu.duckee.duckletwebserver.utils.Mapping;
 import eu.duckee.duckletwebserver.utils.SimpleLogger;
 import lombok.Getter;
@@ -28,6 +29,8 @@ import java.util.Arrays;
 public class DuckletEndpoint {
 
     @Setter
+    private Object parent;
+    @Setter
     private HttpMethod httpMethod;
     @Setter
     private Mapping mapping;
@@ -39,8 +42,9 @@ public class DuckletEndpoint {
 
     private final DuckletController controller;
 
-    public DuckletEndpoint(DuckletController controller) {
+    public DuckletEndpoint(DuckletController controller, Object parent) {
         this.controller = controller;
+        this.parent = parent;
     }
 
     public void setMethod(Method method) {
@@ -67,7 +71,7 @@ public class DuckletEndpoint {
         }
     }
 
-    protected DuckletResponse execute(Object parent, DuckletRequest request) throws DuckletHandlerException {
+    protected DuckletResponse execute(DuckletRequest request) throws DuckletHandlerException {
         AuthResult authResult = null;
         if (accessType != AccessType.PERMIT_ALL) {
             authResult = controller.getSecurityTrail().authenticate(request);
@@ -133,14 +137,16 @@ public class DuckletEndpoint {
                     if (request.getHttpParams() == null) {
                         processedParams[i] = null;
                     } else {
-                        processedParams[i] = request.getHttpParams().getOrDefault(meta.value(), null);
+                        String param = request.getHttpParams().getOrDefault(meta.value(), null);
+                        processedParams[i] = ConversionsUtils.convert(meta.paramType(), param);
                     }
                 }
                 case REQUEST_URL_PARAM -> {
                     if (request.getTagLines() == null) {
                         processedParams[i] = null;
                     } else {
-                        processedParams[i] = request.getTagLines().getOrDefault(meta.value(), null);
+                        String param = request.getTagLines().getOrDefault(meta.value(), null);
+                        processedParams[i] = ConversionsUtils.convert(meta.paramType(), param);
                     }
                 }
             }

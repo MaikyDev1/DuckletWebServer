@@ -17,23 +17,19 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class DuckletHandler {
 
-    private DuckletController controller;
+    private final DuckletController controller;
 
     public DuckletHandler(DuckletController controller) {
         this.controller = controller;
     }
 
     private boolean requireAuthentification;
-    private Object ducklet;
-    private String mapping;
-    private List<DuckletEndpoint> methods;
+    //private String mapping;
+    private final List<DuckletEndpoint> methods = new ArrayList<>();
 
     /**
      * Internal process for creating routes from instances
@@ -41,14 +37,12 @@ public class DuckletHandler {
      * @return The wrapped handler of the instance
      * @throws DuckletHandlerException Any bad implementation will result in a failer!
      */
-    protected static DuckletHandler wrapFromRoute(DuckletController controller, Object object) throws DuckletHandlerException {
-        DuckletHandler dh = new DuckletHandler(controller);
+    protected DuckletHandler addDucklet(Object object) throws DuckletHandlerException {
         Class<?> clazz = object.getClass();
-        if (!clazz.isAnnotationPresent(RequestMapping.class))
-            throw new DuckletHandlerException("An object with no RequestMapping was provided!");
-        dh.mapping = clazz.getAnnotation(RequestMapping.class).value();
-        dh.requireAuthentification = clazz.isAnnotationPresent(AuthenticatedOnly.class);
-        dh.methods = new ArrayList<>();
+//        if (!clazz.isAnnotationPresent(RequestMapping.class))
+//            throw new DuckletHandlerException("An object with no RequestMapping was provided!");
+//        dh.mapping = clazz.getAnnotation(RequestMapping.class).value();
+        requireAuthentification = clazz.isAnnotationPresent(AuthenticatedOnly.class);
         for (Field field : clazz.getDeclaredFields()) {
             if (field.isAnnotationPresent(InjectSecurity.class)) {
                 field.setAccessible(true);
@@ -60,15 +54,14 @@ public class DuckletHandler {
             }
         }
         for (Method method : clazz.getDeclaredMethods())
-            dh.addMethod(method);
-        dh.ducklet = object;
-        return dh;
+            addMethod(method, object);
+        return this;
     }
 
-    private void addMethod(Method method) throws DuckletHandlerException {
+    private void addMethod(Method method, Object parent) throws DuckletHandlerException {
         if (!method.isAnnotationPresent(RequestMapping.class))
             return;
-        DuckletEndpoint endpoint = new DuckletEndpoint(controller);
+        DuckletEndpoint endpoint = new DuckletEndpoint(controller, parent);
         endpoint.setMethod(method);
 
         if (method.isAnnotationPresent(AuthenticatedOnly.class)) {
@@ -99,15 +92,11 @@ public class DuckletHandler {
 
     /**
      * We are trying to match a url to this route handler.
-     *
      * This function is called only from the controller. We must respond here or later to the controller
      * <b>DON'T</b> let this function finish without a HttpExchange response!
      *
-     * @param exchange
-     * @param url
-     * @return
-     * @throws IOException
-     * @throws DuckletHandlerException
+     * @param exchange The http exchange from HttpServer
+     * @param url The url from HttpServer
      */
     protected boolean tryAndHandle(HttpExchange exchange, String url) throws IOException, DuckletHandlerException {
         boolean methodNotAllowed = false;
@@ -143,7 +132,7 @@ public class DuckletHandler {
         }
         Map<String, String> query = HttpTools.computeQueryParams(exchange.getRequestURI().getRawQuery());
         request.addTagLines(tagLines).addHttpParams(query).setHttpBody(body);
-        endpoint.execute(ducklet, request).respond(exchange);
+        endpoint.execute(request).respond(exchange);
         return true;
     }
 

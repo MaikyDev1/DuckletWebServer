@@ -150,6 +150,7 @@ public class DuckletResponse {
     }
 
     public DuckletResponse sendJson(String k1, Object v1) {
+        if (v1 == null || k1 == null) return this;
         this.responseType = ResponseType.JSON;
         String v1JsonReady;
         if (v1 instanceof Number)
